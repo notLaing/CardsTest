@@ -27,6 +27,21 @@ public class JSONRequest : MonoBehaviour
         }
 
         GameManager.Instance.baseCards = JsonUtility.FromJson<GameManager.CardList>(jsonString);
+
+        
+
+        foreach(GameManager.Card c in GameManager.Instance.baseCards.cards)
+        {
+            CardScriptableObj test = ScriptableObject.CreateInstance<CardScriptableObj>();
+            //populate with data
+            test.FillWithData(c);
+
+            //add to test list
+            GameManager.Instance.testCSO.Add(test);
+        }
+
+
+
         /*CardScriptableObj[] tempCards = new CardScriptableObj[3];
         tempCards = JsonUtility.FromJson<CardScriptableObj[]>(jsonString);
         GameManager.Instance.baseCards.cards = tempCards;*/

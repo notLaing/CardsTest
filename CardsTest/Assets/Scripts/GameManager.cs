@@ -4,6 +4,27 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
 
+
+
+/// OOOOOOIIIIIII LOOK HERE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+/// 
+/// The PlayerTurnPrep is being called twice in the beginning. It probably has something to do with the
+/// JSONRequest script adding itself to the OnGameStateChanged
+/// 
+/// After JSONRequest, fill the data into a scriptable object. For each scriptable object, make a card. How?
+/// Well, should be able to dig through the baseCards (if it has become a list of scriptable objects),
+/// set some variable of type CardScriptableObj equal to that, then have a function that fills out the information.
+/// This is an alternative to creating a scriptable obj in the assets folder and moving it via inspector
+/// 
+/// YOU NEED TO FIX THIS STUFF!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+
+
+/// <summary>
+/// Sits on GameManager object.
+/// Holds player and card data. Manages the game via GameState enumerator.
+/// </summary>
+
 public class GameManager : MonoBehaviour
 {
     public static GameManager Instance;
@@ -12,10 +33,16 @@ public class GameManager : MonoBehaviour
     public CardList deckCards = new CardList();
     public CardList handCards = new CardList();
     public CardList discardedCards = new CardList();
+
+    public List<CardScriptableObj> testCSO = new List<CardScriptableObj>();
+
+    public CardPile pileManager;
     public string url = "https://client.dev.kote.robotseamonster.com/TEST_HARNESS/json_files/cards.json";
     public GameState state;
     public static event Action<GameState> OnGameStateChanged;
     public int delayTime = 2000;
+    public int playerEnergy = 4;
+    public int playerMaxEnergy = 4;
 
     public enum GameState
     {
@@ -84,6 +111,7 @@ public class GameManager : MonoBehaviour
             case GameState.GameStart:
                 break;
             case GameState.PlayerTurnPrep:
+                HandlePlayerTurnPrep();
                 break;
             case GameState.PlayerTurnWait:
                 HandlePlayerTurnWait();
@@ -91,14 +119,28 @@ public class GameManager : MonoBehaviour
             case GameState.PlayerTurnPlay:
                 break;
             case GameState.PlayerTurnEnd:
+                HandlePlayerTurnEnd();
                 break;
         }
 
         OnGameStateChanged?.Invoke(newState);
     }
 
+    void HandlePlayerTurnPrep()
+    {
+        EnergyHandler.Instance.ResetEnergy();
+
+        // draw 4 cards
+        if(handCards.cards.Count == 0) pileManager.MoveCardsToPile(4, deckCards, handCards);
+    }
+
     async void HandlePlayerTurnWait()
     {
         await Task.Delay(delayTime);
+    }
+
+    void HandlePlayerTurnEnd()
+    {
+        pileManager.EndTurn();
     }
 }

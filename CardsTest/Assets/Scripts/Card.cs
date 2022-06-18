@@ -4,27 +4,10 @@ using UnityEngine;
 
 public class Card : MonoBehaviour
 {
-    Vector3 dragOffset;
-    Camera cam;
+    /// <summary>
+    /// Might be able to move card class and stuff into here. Move what's already here to CardDisplay.cs,
+    /// and remove MonoBehavior from this
+    /// </summary> 
 
-    void Awake()
-    {
-        cam = Camera.main;
-    }
-
-    private void OnMouseDown()
-    {
-        dragOffset = transform.position - GetMousePos();
-    }
-
-    private void OnMouseDrag()
-    {
-        transform.position = GetMousePos() + dragOffset;
-    }
-
-    Vector3 GetMousePos()
-    {
-        //var mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-        return cam.ScreenToWorldPoint(Input.mousePosition);// mousePos;
-    }
+    
 }
