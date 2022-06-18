@@ -15,7 +15,7 @@ public class CardDisplay : MonoBehaviour
     public TextMesh textDescription;
     public SpriteRenderer icon;
 
-    void CreateCardDisplay(CardScriptableObj cardScriptObj)
+    public void CreateCardDisplay(CardScriptableObj cardScriptObj)
     {
         textName.text = cardScriptObj.name;
         textCost.text = cardScriptObj.GetCardCost().ToString();
@@ -37,6 +37,14 @@ public class CardDisplay : MonoBehaviour
     private void OnMouseDrag()
     {
         transform.position = GetMousePos() + dragOffset;
+    }
+
+    private void OnMouseUp()
+    {
+        if(transform.position.y > -1)
+        {
+            //play card
+        }
     }
 
     Vector3 GetMousePos()

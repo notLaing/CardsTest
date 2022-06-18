@@ -10,17 +10,26 @@ using UnityEngine.UI;
 
 public class CardPile : MonoBehaviour
 {
+    public GameObject cardTemplate;
     public Text deckCardCountText;
     public Text discardedCardCountText;
+    Vector3 deckCoordinates = new Vector3(-8, -4.35f, 0);
     public int testMoveCount = 1;
 
-    public void MoveCardsToPile(int num, GameManager.CardList fromPile, GameManager.CardList toPile)//, CardScriptableObj card2)
+    public void DrawCardsFromDeck(int num, GameManager.CardList fromPile, GameManager.CardList toPile)//, CardScriptableObj card2)
     {
+        // check if the number of displayCards is less than the number of cards we need to play
+        while (GameManager.Instance.maxCardsInHand > GameManager.Instance.displayCards.Count)
+        {
+            GameManager.Instance.displayCards.Add(Instantiate(cardTemplate, deckCoordinates, Quaternion.identity));
+        }
+
         // drawing cards, but there's less than num left in the deck
         int drawFirst = 0;
         if (num > fromPile.cards.Count)
         {
             drawFirst = fromPile.cards.Count;
+            // move all the cards from the discard pile to the deck pile
             while (GameManager.Instance.discardedCards.cards.Count > 0)
             {
                 GameManager.Instance.deckCards.cards.Add(GameManager.Instance.discardedCards.cards[0]);
@@ -43,6 +52,9 @@ public class CardPile : MonoBehaviour
                 GameManager.Card temp = fromPile.cards[randomCard];
                 fromPile.cards.RemoveAt(randomCard);
                 toPile.cards.Add(temp);
+                
+                //testing the display using the first [0] index of scriptable objects
+                GameManager.Instance.displayCards[i].GetComponent<CardDisplay>().CreateCardDisplay(GameManager.Instance.testCSO[0]);
             }
         }
 
@@ -87,7 +99,7 @@ public class CardPile : MonoBehaviour
 
     public void TestMoving()
     {
-        MoveCardsToPile(testMoveCount, GameManager.Instance.deckCards, GameManager.Instance.handCards);
+        DrawCardsFromDeck(testMoveCount, GameManager.Instance.deckCards, GameManager.Instance.handCards);
     }
     
     public void TestPlayCard()

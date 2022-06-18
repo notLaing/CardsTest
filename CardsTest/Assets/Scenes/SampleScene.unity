@@ -1072,6 +1072,8 @@ MonoBehaviour:
   discardedCards:
     cards: []
   testCSO: []
+  displayCards: []
+  maxCardsInHand: 4
   pileManager: {fileID: 798819900}
   url: https://client.dev.kote.robotseamonster.com/TEST_HARNESS/json_files/cards.json
   state: 0
@@ -1116,6 +1118,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d2f38fbcb8a0b9f4a89987660fbd9213, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  cardTemplate: {fileID: 3705432762707065038, guid: 127708df113f0ab48b40d106220a3de7, type: 3}
   deckCardCountText: {fileID: 176648594}
   discardedCardCountText: {fileID: 730770991}
   testMoveCount: 1

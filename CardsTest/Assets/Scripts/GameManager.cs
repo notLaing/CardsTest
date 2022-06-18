@@ -35,6 +35,8 @@ public class GameManager : MonoBehaviour
     public CardList discardedCards = new CardList();
 
     public List<CardScriptableObj> testCSO = new List<CardScriptableObj>();
+    public List<GameObject> displayCards = new List<GameObject>();
+    public int maxCardsInHand = 4;
 
     public CardPile pileManager;
     public string url = "https://client.dev.kote.robotseamonster.com/TEST_HARNESS/json_files/cards.json";
@@ -131,7 +133,7 @@ public class GameManager : MonoBehaviour
         EnergyHandler.Instance.ResetEnergy();
 
         // draw 4 cards
-        if(handCards.cards.Count == 0) pileManager.MoveCardsToPile(4, deckCards, handCards);
+        if(handCards.cards.Count == 0) pileManager.DrawCardsFromDeck(maxCardsInHand, deckCards, handCards);
     }
 
     async void HandlePlayerTurnWait()
