@@ -13,62 +13,71 @@ public class CardPile : MonoBehaviour
     public GameObject cardTemplate;
     public Text deckCardCountText;
     public Text discardedCardCountText;
-    Vector3 deckCoordinates = new Vector3(-8, -4.35f, 0);
     public int testMoveCount = 1;
 
-    public void DrawCardsFromDeck(int num, GameManager.CardList fromPile, GameManager.CardList toPile)//, CardScriptableObj card2)
+    public void DrawCardsFromDeck(int num)
     {
+        foreach (GameObject c in GameManager.Instance.displayCards)
+        {
+            c.transform.position = GameManager.Instance.cardSpawnLocation.position;
+            c.transform.localScale = GameManager.Instance.cardSpawnLocation.localScale;
+        }
+
         // check if the number of displayCards is less than the number of cards we need to play
         while (GameManager.Instance.maxCardsInHand > GameManager.Instance.displayCards.Count)
         {
-            GameManager.Instance.displayCards.Add(Instantiate(cardTemplate, deckCoordinates, Quaternion.identity));
+            GameManager.Instance.displayCards.Add(Instantiate(cardTemplate, GameManager.Instance.cardSpawnLocation.position, Quaternion.identity));
+            GameManager.Instance.displayCards[GameManager.Instance.displayCards.Count - 1].GetComponent<CardDisplay>().indexOverall = GameManager.Instance.displayCards.Count - 1;
         }
 
         // drawing cards, but there's less than num left in the deck
         int drawFirst = 0;
-        if (num > fromPile.cards.Count)
+        if (num > GameManager.Instance.deckCards.Count)
         {
-            drawFirst = fromPile.cards.Count;
+            drawFirst = GameManager.Instance.deckCards.Count;
+
             // move all the cards from the discard pile to the deck pile
-            while (GameManager.Instance.discardedCards.cards.Count > 0)
+            while (GameManager.Instance.discardedCards.Count > 0)
             {
-                GameManager.Instance.deckCards.cards.Add(GameManager.Instance.discardedCards.cards[0]);
-                GameManager.Instance.discardedCards.cards.RemoveAt(0);
+                GameManager.Instance.deckCards.Add(GameManager.Instance.discardedCards[0]);
+                GameManager.Instance.discardedCards.RemoveAt(0);
             }
         }
 
         for (int i = 0; i < num; ++i)
         {
+            int drawIndex = 0;
+
             // draw the cards that were already in the deck first
-            if (i < drawFirst)
-            {
-                GameManager.Card temp = fromPile.cards[0];
-                fromPile.cards.RemoveAt(0);
-                toPile.cards.Add(temp);
-            }
-            else
-            {
-                int randomCard = Random.Range(0, fromPile.cards.Count);
-                GameManager.Card temp = fromPile.cards[randomCard];
-                fromPile.cards.RemoveAt(randomCard);
-                toPile.cards.Add(temp);
-                
-                //testing the display using the first [0] index of scriptable objects
-                GameManager.Instance.displayCards[i].GetComponent<CardDisplay>().CreateCardDisplay(GameManager.Instance.testCSO[0]);
-            }
+            if (!(i < drawFirst)) drawIndex = Random.Range(0, GameManager.Instance.deckCards.Count);
+
+            GameManager.Instance.handCards.Add(GameManager.Instance.deckCards[drawIndex]);
+            GameManager.Instance.deckCards.RemoveAt(drawIndex);
+
+            // create the appropriate type of card
+            GameManager.Instance.displayCards[i].GetComponent<CardDisplay>().CreateCardDisplay(GameManager.Instance.handCards[GameManager.Instance.handCards.Count - 1]);
+            GameManager.Instance.displayCards[i].GetComponent<CardDisplay>().inHand = true;
+
+            // animate from deck to hand
+            GameManager.Instance.displayCards[i].GetComponent<CardDisplay>().ForceReset();
+            GameManager.Instance.displayCards[i].GetComponent<CardDisplay>().SetAnimState(CardDisplay.StateAnimation.Draw);
         }
 
         UpdateCardCounts();
     }
 
-    public void PlayCard(int index)
+    public void PlayCard(int indHand, int indOverall)
     {
-        GameManager.Card temp = GameManager.Instance.handCards.cards[index];
+        CardScriptableObj temp = GameManager.Instance.handCards[indHand];
+
+        // play and move the card (data and display) if the player has enough energy
         if(EnergyHandler.Instance.HaveEnoughEnergy(temp.cost))
         {
-            GameManager.Instance.discardedCards.cards.Add(GameManager.Instance.handCards.cards[index]);
-            GameManager.Instance.handCards.cards.RemoveAt(index);
-            // TODO: animate card
+            GameManager.Instance.discardedCards.Add(GameManager.Instance.handCards[indHand]);
+            GameManager.Instance.displayCards[indOverall].GetComponent<CardDisplay>().SetAnimState(CardDisplay.StateAnimation.Play);
+            GameManager.Instance.displayCards[indOverall].GetComponent<CardDisplay>().indexInHand = GameManager.Instance.maxCardsInHand + 1;
+            GameManager.Instance.displayCards[indOverall].GetComponent<CardDisplay>().inHand = false;
+            GameManager.Instance.handCards.RemoveAt(indHand);
 
             UpdateCardCounts();
         }
@@ -82,10 +91,15 @@ public class CardPile : MonoBehaviour
 
     public void EndTurn()
     {
-        while(GameManager.Instance.handCards.cards.Count > 0)
+        while(GameManager.Instance.handCards.Count > 0)
         {
-            GameManager.Instance.discardedCards.cards.Add(GameManager.Instance.handCards.cards[0]);
-            GameManager.Instance.handCards.cards.RemoveAt(0);
+            GameManager.Instance.discardedCards.Add(GameManager.Instance.handCards[0]);
+            GameManager.Instance.handCards.RemoveAt(0);
+        }
+
+        foreach(GameObject c in GameManager.Instance.displayCards)
+        {
+            c.GetComponent<CardDisplay>().inHand = false;
         }
 
         UpdateCardCounts();
@@ -93,17 +107,18 @@ public class CardPile : MonoBehaviour
 
     public void UpdateCardCounts()
     {
-        deckCardCountText.text = GameManager.Instance.deckCards.cards.Count.ToString();
-        discardedCardCountText.text = GameManager.Instance.discardedCards.cards.Count.ToString();
-    }
+        deckCardCountText.text = GameManager.Instance.deckCards.Count.ToString();
+        discardedCardCountText.text = GameManager.Instance.discardedCards.Count.ToString();
 
-    public void TestMoving()
-    {
-        DrawCardsFromDeck(testMoveCount, GameManager.Instance.deckCards, GameManager.Instance.handCards);
-    }
-    
-    public void TestPlayCard()
-    {
-        PlayCard(testMoveCount);
+        int counter = 0;
+        for (int i = 0; i < GameManager.Instance.displayCards.Count; ++i)
+        {
+            CardDisplay currentCard = GameManager.Instance.displayCards[i].GetComponent<CardDisplay>();
+            if (currentCard.inHand)
+            {
+                currentCard.indexInHand = counter;
+                ++counter;
+            }
+        }
     }
 }

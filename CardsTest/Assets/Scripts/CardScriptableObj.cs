@@ -2,6 +2,11 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+/// <summary>
+/// Is not placed on anything
+/// ScriptableObject of cards
+/// </summary>
+
 [CreateAssetMenu(fileName = "New Card", menuName = "Card")]
 public class CardScriptableObj : ScriptableObject
 {

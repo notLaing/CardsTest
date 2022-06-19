@@ -3,6 +3,11 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
+/// <summary>
+/// Sits on GameManager object.
+/// Handles the player energy
+/// </summary>
+
 public class EnergyHandler : MonoBehaviour
 {
     public static EnergyHandler Instance;

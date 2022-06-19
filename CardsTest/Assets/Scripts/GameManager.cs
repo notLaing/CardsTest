@@ -4,25 +4,12 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
 
-
-
-/// OOOOOOIIIIIII LOOK HERE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-/// 
-/// The PlayerTurnPrep is being called twice in the beginning. It probably has something to do with the
-/// JSONRequest script adding itself to the OnGameStateChanged
-/// 
-/// After JSONRequest, fill the data into a scriptable object. For each scriptable object, make a card. How?
-/// Well, should be able to dig through the baseCards (if it has become a list of scriptable objects),
-/// set some variable of type CardScriptableObj equal to that, then have a function that fills out the information.
-/// This is an alternative to creating a scriptable obj in the assets folder and moving it via inspector
-/// 
-/// YOU NEED TO FIX THIS STUFF!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-
-
 /// <summary>
 /// Sits on GameManager object.
 /// Holds player and card data. Manages the game via GameState enumerator.
+/// 
+/// Notes:
+/// The PlayerTurnPrep is being called twice in the beginning. It probably has something to do with the JSONRequest script adding itself to the OnGameStateChanged
 /// </summary>
 
 public class GameManager : MonoBehaviour
@@ -30,13 +17,18 @@ public class GameManager : MonoBehaviour
     public static GameManager Instance;
 
     public CardList baseCards = new CardList();
-    public CardList deckCards = new CardList();
-    public CardList handCards = new CardList();
-    public CardList discardedCards = new CardList();
 
-    public List<CardScriptableObj> testCSO = new List<CardScriptableObj>();
+    public List<CardScriptableObj> baseCardsSO = new List<CardScriptableObj>();
     public List<GameObject> displayCards = new List<GameObject>();
+    public List<CardScriptableObj> deckCards = new List<CardScriptableObj>();
+    public List<CardScriptableObj> handCards = new List<CardScriptableObj>();
+    public List<CardScriptableObj> discardedCards = new List<CardScriptableObj>();
+    public Sprite[] imageList = new Sprite[78];
     public int maxCardsInHand = 4;
+
+    public Transform cardSpawnLocation;
+    public Transform cardHandLocation;
+    public Transform cardDiscardLocation;
 
     public CardPile pileManager;
     public string url = "https://client.dev.kote.robotseamonster.com/TEST_HARNESS/json_files/cards.json";
@@ -56,7 +48,7 @@ public class GameManager : MonoBehaviour
     }
 
     /// <summary>
-    /// card classes start
+    /// card classes start. Used for grabbing data from JSON
     /// </summary>
     [System.Serializable]
     public class Effect
@@ -80,7 +72,6 @@ public class GameManager : MonoBehaviour
     [System.Serializable]
     public class CardList
     {
-        //public Card[] cards;
         public List<Card> cards;
     }
     /// <summary>
@@ -96,12 +87,6 @@ public class GameManager : MonoBehaviour
     void Start()
     {
         UpdateGameState(GameState.GameStart);
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
     }
 
     public void UpdateGameState(GameState newState)
@@ -133,7 +118,7 @@ public class GameManager : MonoBehaviour
         EnergyHandler.Instance.ResetEnergy();
 
         // draw 4 cards
-        if(handCards.cards.Count == 0) pileManager.DrawCardsFromDeck(maxCardsInHand, deckCards, handCards);
+        if(handCards.Count == 0) pileManager.DrawCardsFromDeck(maxCardsInHand);
     }
 
     async void HandlePlayerTurnWait()
@@ -143,6 +128,13 @@ public class GameManager : MonoBehaviour
 
     void HandlePlayerTurnEnd()
     {
+        foreach(GameObject card in displayCards)
+        {
+            if(card.GetComponent<CardDisplay>().inHand)
+            {
+                card.GetComponent<CardDisplay>().SetAnimState(CardDisplay.StateAnimation.Discard);
+            }
+        }
         pileManager.EndTurn();
     }
 }
