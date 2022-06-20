@@ -16,44 +16,55 @@ public class CardDisplay : MonoBehaviour
         Draw,
         Spread,
         Play,
-        Discard
+        Discard,
+        Discarded
     }
 
+    public CardScriptableObj cardScriptObj;
     Vector3 dragOffset, handPositionVec;
     Camera cam;
     StateAnimation animState;
     float drawAnimTime = .3f;
     float discardPlayAnimTime = .6f;
-    float discardEndAnimTime = 1.5f;
-    float spreadAnimTime = .1f;
+    public float discardEndAnimTime = 1.5f;
+    float spreadAnimTime = .3f;
     float playStillAnimTime = 2f;
     float animTime = 0;
     float spreadRotMultiplier = -10f;
-    float spreadHeightMultiplier = -.3f;
-    float spreadWidthMultiplier = 2f;
-    float xCurveRate = 2.5f;
+    float spreadHeightMultiplier = -20f;
+    float spreadWidthMultiplier = 200f;
+    float xCurveRate = 300;//2.5f;
     float yCurveRate = 3.7f;
     float endTransitionCutoff = 2.1f;
 
-    public TextMesh textName;
-    public TextMesh textCost;
-    public TextMesh textType;
-    public TextMesh textDescription;
-    public SpriteRenderer icon;
-    float playHeight = -2.3f;
+    public Text textName;
+    public Text textCost;
+    public Text textType;
+    public Text textDescription;
+    public Image icon;
+    public Canvas canvas;
+    Color enoughColor = Color.white;
+    Color notEnoughColor = Color.red;
+    public GameObject glow;
+    float playHeight = 150f;
+    float playWidth = 400;
     float playSize = .7f;
-    float hoverSize = .5f;
+    float hoverRaiseAmount = 100;
     public int indexInHand;
     public int indexOverall;
     public bool inHand = false;
+    bool beingDragged = false;
 
-    public void CreateCardDisplay(CardScriptableObj cardScriptObj)
+    public void CreateCardDisplay(CardScriptableObj c)
     {
+        cardScriptObj = c;
         textName.text = cardScriptObj.name;
         textCost.text = cardScriptObj.GetCardCost().ToString();
+        textCost.color = enoughColor;
         textType.text = cardScriptObj.type;
         textDescription.text = cardScriptObj.GetDescription();
         icon.sprite = GameManager.Instance.imageList[cardScriptObj.image_id];
+        glow.SetActive(true);
 
         transform.eulerAngles = Vector3.zero;
     }
@@ -81,11 +92,14 @@ public class CardDisplay : MonoBehaviour
                 break;
             case StateAnimation.Play:
                 AnimatePlay();
-                ResetAnimTime(playStillAnimTime + discardPlayAnimTime);
+                if(ResetAnimTime(playStillAnimTime + discardPlayAnimTime)) animState = StateAnimation.Discarded;
                 break;
             case StateAnimation.Discard:
                 AnimateDiscard();
                 if(ResetAnimTime(discardEndAnimTime)) GameManager.Instance.UpdateGameState(GameManager.GameState.PlayerTurnPrep);
+                break;
+            case StateAnimation.Discarded:
+                FinishDiscard();
                 break;
         }
 
@@ -124,11 +138,11 @@ public class CardDisplay : MonoBehaviour
     {
         // find the spread amount/position/rotation for the card
         float range = (float)(GameManager.Instance.handCards.Count - 1);
-        float spread = AnimMath.Map(indexInHand, 0, range, (range / -2), (range / 2));
+        float spread = (range < 1) ? 0 : AnimMath.Map(indexInHand, 0, range, (range / -2), (range / 2));
 
         Vector3 place = new Vector3(spread * spreadWidthMultiplier, Mathf.Abs(spread) * spreadHeightMultiplier, 0);
-        transform.position = AnimMath.Ease(transform.position, GameManager.Instance.cardHandLocation.position + place, .001f);
-        handPositionVec = transform.position;
+        transform.localPosition = AnimMath.Ease(transform.localPosition, GameManager.Instance.cardHandLocation.localPosition + place, .001f);
+        handPositionVec = transform.localPosition;
 
         Quaternion targetRot = GameManager.Instance.cardHandLocation.rotation;
         targetRot.eulerAngles += new Vector3(0, 0, spread * spreadRotMultiplier);
@@ -152,6 +166,12 @@ public class CardDisplay : MonoBehaviour
         }
     }
 
+    void FinishDiscard()
+    {
+        // move off the screen
+        transform.localPosition += new Vector3(0, -3000, 0);
+    }
+
     void AnimateDiscard()
     {
         // discard from hand at the end of the turn
@@ -161,30 +181,39 @@ public class CardDisplay : MonoBehaviour
         float cutoffValue = (animTime / discardEndAnimTime) * yCurveRate;
         if (cutoffValue < endTransitionCutoff)
         {
-            float xTarget = AnimMath.Ease(transform.position.x, handPositionVec.x + xCurveRate, .2f);
-            float yTarget = AnimMath.Lerp(GameManager.Instance.cardDiscardLocation.position.y, 0, Mathf.Clamp(Mathf.Sin(cutoffValue), 0, 1), false);
+            float xTarget = AnimMath.Ease(transform.localPosition.x, handPositionVec.x + xCurveRate, .2f);
+            float yTarget = AnimMath.Lerp(GameManager.Instance.cardDiscardLocation.localPosition.y, 0, Mathf.Clamp(Mathf.Sin(cutoffValue), 0, 1), false);
 
-            transform.position = new Vector3(xTarget, yTarget, 0);
+            transform.localPosition = new Vector3(xTarget, yTarget, 0);
         }
         else
         {
-            transform.position = AnimMath.Ease(transform.position, GameManager.Instance.cardDiscardLocation.position, .001f);
+            transform.localPosition = AnimMath.Ease(transform.localPosition, GameManager.Instance.cardDiscardLocation.localPosition, .001f);
         }
+    }
+
+    public void ChangeColor(bool b)
+    {
+        textCost.color = b ? enoughColor : notEnoughColor;
+        glow.SetActive(b);
     }
 
     void OnMouseOver()
     {
-        if(animState == StateAnimation.Idle) transform.localScale = AnimMath.Ease(transform.localScale, Vector3.one * hoverSize, .001f);
+        if (!beingDragged && (animState == StateAnimation.Idle)) transform.localPosition = AnimMath.Ease(transform.localPosition, handPositionVec + new Vector3(0, hoverRaiseAmount, 0), .001f);
+        canvas.overrideSorting = true;
     }
 
     void OnMouseExit()
     {
-        if(animState == StateAnimation.Idle) transform.localScale = GameManager.Instance.cardHandLocation.localScale;
+        if(animState == StateAnimation.Idle) transform.localPosition = handPositionVec;
+        canvas.overrideSorting = false;
     }
 
     void OnMouseDown()
     {
         dragOffset = transform.position - GetMousePos();
+        beingDragged = true;
     }
 
     void OnMouseDrag()
@@ -194,7 +223,8 @@ public class CardDisplay : MonoBehaviour
 
     void OnMouseUp()
     {
-        if(transform.position.y > playHeight)
+        beingDragged = false;
+        if((Mathf.Abs(transform.localPosition.y) < playHeight) && (Mathf.Abs(transform.localPosition.x) < playWidth))
         {
             // play card
             GameManager.Instance.pileManager.PlayCard(indexInHand, indexOverall);

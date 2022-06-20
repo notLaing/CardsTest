@@ -29,6 +29,7 @@ public class GameManager : MonoBehaviour
     public Transform cardSpawnLocation;
     public Transform cardHandLocation;
     public Transform cardDiscardLocation;
+    public GameObject canvasObj;
 
     public CardPile pileManager;
     public string url = "https://client.dev.kote.robotseamonster.com/TEST_HARNESS/json_files/cards.json";

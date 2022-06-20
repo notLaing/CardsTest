@@ -13,7 +13,6 @@ public class CardPile : MonoBehaviour
     public GameObject cardTemplate;
     public Text deckCardCountText;
     public Text discardedCardCountText;
-    public int testMoveCount = 1;
 
     public void DrawCardsFromDeck(int num)
     {
@@ -26,7 +25,9 @@ public class CardPile : MonoBehaviour
         // check if the number of displayCards is less than the number of cards we need to play
         while (GameManager.Instance.maxCardsInHand > GameManager.Instance.displayCards.Count)
         {
-            GameManager.Instance.displayCards.Add(Instantiate(cardTemplate, GameManager.Instance.cardSpawnLocation.position, Quaternion.identity));
+            GameObject spawnCard = Instantiate(cardTemplate, GameManager.Instance.cardSpawnLocation.position, Quaternion.identity);
+            spawnCard.transform.SetParent(GameManager.Instance.canvasObj.transform, false);
+            GameManager.Instance.displayCards.Add(spawnCard);
             GameManager.Instance.displayCards[GameManager.Instance.displayCards.Count - 1].GetComponent<CardDisplay>().indexOverall = GameManager.Instance.displayCards.Count - 1;
         }
 
@@ -79,13 +80,12 @@ public class CardPile : MonoBehaviour
             GameManager.Instance.displayCards[indOverall].GetComponent<CardDisplay>().inHand = false;
             GameManager.Instance.handCards.RemoveAt(indHand);
 
-            UpdateCardCounts();
+            UpdateCardCounts(true);
         }
         else
         {
             Debug.Log("Not enough energy");
-            
-            // TODO: return card (sprite) to hand
+            // card automatically returns to hand via CardDisplay.OnMouseExit()
         }
     }
 
@@ -102,10 +102,11 @@ public class CardPile : MonoBehaviour
             c.GetComponent<CardDisplay>().inHand = false;
         }
 
-        UpdateCardCounts();
+        //UpdateCardCounts();
+        StartCoroutine(UpdateCardCountAfterTime());
     }
 
-    public void UpdateCardCounts()
+    public void UpdateCardCounts(bool resetSpread = false)
     {
         deckCardCountText.text = GameManager.Instance.deckCards.Count.ToString();
         discardedCardCountText.text = GameManager.Instance.discardedCards.Count.ToString();
@@ -114,11 +115,20 @@ public class CardPile : MonoBehaviour
         for (int i = 0; i < GameManager.Instance.displayCards.Count; ++i)
         {
             CardDisplay currentCard = GameManager.Instance.displayCards[i].GetComponent<CardDisplay>();
+            currentCard.ChangeColor(GameManager.Instance.playerEnergy >= currentCard.cardScriptObj.cost);
+
             if (currentCard.inHand)
             {
                 currentCard.indexInHand = counter;
                 ++counter;
+                if(resetSpread) currentCard.SetAnimState(CardDisplay.StateAnimation.Spread);
             }
         }
+    }
+
+    IEnumerator UpdateCardCountAfterTime()
+    {
+        yield return new WaitForSeconds(GameManager.Instance.displayCards[0].GetComponent<CardDisplay>().discardEndAnimTime);
+        UpdateCardCounts();
     }
 }
