@@ -13,6 +13,7 @@ public class CardPile : MonoBehaviour
     public GameObject cardTemplate;
     public Text deckCardCountText;
     public Text discardedCardCountText;
+    public bool playingCard = false;
 
     public void DrawCardsFromDeck(int num)
     {
@@ -65,22 +66,30 @@ public class CardPile : MonoBehaviour
         }
 
         UpdateCardCounts();
+        //UpdateCardCountAfterTime(GameManager.Instance.displayCards[0].GetComponent<CardDisplay>().drawAnimTime);
     }
 
     public void PlayCard(int indHand, int indOverall)
     {
+        if (playingCard) return;
+
         CardScriptableObj temp = GameManager.Instance.handCards[indHand];
 
         // play and move the card (data and display) if the player has enough energy
         if(EnergyHandler.Instance.HaveEnoughEnergy(temp.cost))
         {
+            playingCard = true;
             GameManager.Instance.discardedCards.Add(GameManager.Instance.handCards[indHand]);
-            GameManager.Instance.displayCards[indOverall].GetComponent<CardDisplay>().SetAnimState(CardDisplay.StateAnimation.Play);
-            GameManager.Instance.displayCards[indOverall].GetComponent<CardDisplay>().indexInHand = GameManager.Instance.maxCardsInHand + 1;
-            GameManager.Instance.displayCards[indOverall].GetComponent<CardDisplay>().inHand = false;
+            
+            CardDisplay displayedCard = GameManager.Instance.displayCards[indOverall].GetComponent<CardDisplay>();
+            displayedCard.SetAnimState(CardDisplay.StateAnimation.Play);
+            displayedCard.indexInHand = GameManager.Instance.maxCardsInHand + 1;
+            displayedCard.inHand = false;
+            
             GameManager.Instance.handCards.RemoveAt(indHand);
 
-            UpdateCardCounts(true);
+            //UpdateCardCounts(true);
+            StartCoroutine(UpdateCardCountAfterTime(displayedCard.playStillAnimTime + displayedCard.discardPlayAnimTime, true));
         }
         else
         {
@@ -103,7 +112,7 @@ public class CardPile : MonoBehaviour
         }
 
         //UpdateCardCounts();
-        StartCoroutine(UpdateCardCountAfterTime());
+        StartCoroutine(UpdateCardCountAfterTime(GameManager.Instance.displayCards[0].GetComponent<CardDisplay>().discardEndAnimTime));
     }
 
     public void UpdateCardCounts(bool resetSpread = false)
@@ -115,10 +124,10 @@ public class CardPile : MonoBehaviour
         for (int i = 0; i < GameManager.Instance.displayCards.Count; ++i)
         {
             CardDisplay currentCard = GameManager.Instance.displayCards[i].GetComponent<CardDisplay>();
-            currentCard.ChangeColor(GameManager.Instance.playerEnergy >= currentCard.cardScriptObj.cost);
 
             if (currentCard.inHand)
             {
+                currentCard.ChangeColor(GameManager.Instance.playerEnergy >= currentCard.cardScriptObj.cost);
                 currentCard.indexInHand = counter;
                 ++counter;
                 if(resetSpread) currentCard.SetAnimState(CardDisplay.StateAnimation.Spread);
@@ -126,9 +135,9 @@ public class CardPile : MonoBehaviour
         }
     }
 
-    IEnumerator UpdateCardCountAfterTime()
+    IEnumerator UpdateCardCountAfterTime(float t, bool b = false)
     {
-        yield return new WaitForSeconds(GameManager.Instance.displayCards[0].GetComponent<CardDisplay>().discardEndAnimTime);
-        UpdateCardCounts();
+        yield return new WaitForSeconds(t);
+        UpdateCardCounts(b);
     }
 }

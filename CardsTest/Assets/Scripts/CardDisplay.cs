@@ -24,11 +24,11 @@ public class CardDisplay : MonoBehaviour
     Vector3 dragOffset, handPositionVec;
     Camera cam;
     StateAnimation animState;
-    float drawAnimTime = .3f;
-    float discardPlayAnimTime = .6f;
+    public float drawAnimTime = .3f;
+    public float discardPlayAnimTime = .6f;
     public float discardEndAnimTime = 1.5f;
     float spreadAnimTime = .3f;
-    float playStillAnimTime = 2f;
+    public float playStillAnimTime = 2f;
     float animTime = 0;
     float spreadRotMultiplier = -10f;
     float spreadHeightMultiplier = -20f;
@@ -130,8 +130,9 @@ public class CardDisplay : MonoBehaviour
 
     void AnimateDraw()
     {
-        transform.position = AnimMath.Ease(transform.position, GameManager.Instance.cardHandLocation.position, .001f);
+        //transform.localPosition = AnimMath.Ease(transform.localPosition, GameManager.Instance.cardHandLocation.localPosition, .001f);
         transform.localScale = AnimMath.Ease(transform.localScale, GameManager.Instance.cardHandLocation.localScale, .001f);
+        AnimateSpread();
     }
 
     void AnimateSpread()
@@ -144,24 +145,24 @@ public class CardDisplay : MonoBehaviour
         transform.localPosition = AnimMath.Ease(transform.localPosition, GameManager.Instance.cardHandLocation.localPosition + place, .001f);
         handPositionVec = transform.localPosition;
 
-        Quaternion targetRot = GameManager.Instance.cardHandLocation.rotation;
+        Quaternion targetRot = GameManager.Instance.cardHandLocation.localRotation;
         targetRot.eulerAngles += new Vector3(0, 0, spread * spreadRotMultiplier);
-        transform.rotation = AnimMath.Ease(transform.rotation, targetRot, .001f);
+        transform.localRotation = AnimMath.Ease(transform.localRotation, targetRot, .001f);
     }
 
     void AnimatePlay()
     {
-        // hold in center
+        // hold in center. Currently accounting for a card GameObject with a centered pivot point
         if(animTime < playStillAnimTime)
         {
-            transform.position = AnimMath.Ease(transform.position, Vector3.zero, .001f);
-            transform.rotation = AnimMath.Ease(transform.rotation, Quaternion.identity, .001f);
+            transform.localPosition = AnimMath.Ease(transform.localPosition, Vector3.zero, .001f);
+            transform.localRotation = AnimMath.Ease(transform.localRotation, Quaternion.identity, .001f);
             transform.localScale = AnimMath.Ease(transform.localScale, Vector3.one * playSize, .001f);
         }
         // send to discard
         else
         {
-            transform.position = AnimMath.Ease(transform.position, GameManager.Instance.cardDiscardLocation.position, .001f);
+            transform.localPosition = AnimMath.Ease(transform.localPosition, GameManager.Instance.cardDiscardLocation.localPosition, .001f);
             transform.localScale = AnimMath.Ease(transform.localScale, GameManager.Instance.cardDiscardLocation.localScale, .001f);
         }
     }
@@ -170,6 +171,8 @@ public class CardDisplay : MonoBehaviour
     {
         // move off the screen
         transform.localPosition += new Vector3(0, -3000, 0);
+        GameManager.Instance.pileManager.playingCard = false;
+        animState = StateAnimation.Idle;
     }
 
     void AnimateDiscard()
@@ -233,6 +236,6 @@ public class CardDisplay : MonoBehaviour
 
     Vector3 GetMousePos()
     {
-        return cam.ScreenToWorldPoint(Input.mousePosition);// mousePos;
+        return cam.ScreenToWorldPoint(Input.mousePosition);
     }
 }

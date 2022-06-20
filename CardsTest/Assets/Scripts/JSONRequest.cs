@@ -26,7 +26,7 @@ public class JSONRequest : MonoBehaviour
 
     void CreateCards(string jsonString)
     {
-        // TODO: this is a manual check because this is being called twice at start. fix later
+        // this is a manual check because this is being called twice at start
         if(GameManager.Instance.deckCards.Count > 0)
         {
             GameManager.Instance.UpdateGameState(GameManager.GameState.PlayerTurnPrep);

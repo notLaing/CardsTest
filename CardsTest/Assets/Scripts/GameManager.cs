@@ -41,11 +41,9 @@ public class GameManager : MonoBehaviour
 
     public enum GameState
     {
-        GameStart,//steps 1, 2
-        PlayerTurnPrep,//steps 3, 4, 10
-        PlayerTurnWait,//steps 5, 8
-        PlayerTurnPlay,//steps 6, 7, 8
-        PlayerTurnEnd//step 9
+        GameStart,
+        PlayerTurnPrep,
+        PlayerTurnEnd
     }
 
     /// <summary>
@@ -97,14 +95,10 @@ public class GameManager : MonoBehaviour
         switch (newState)
         {
             case GameState.GameStart:
+                // currently only for allowing JSONRequest to activate
                 break;
             case GameState.PlayerTurnPrep:
                 HandlePlayerTurnPrep();
-                break;
-            case GameState.PlayerTurnWait:
-                HandlePlayerTurnWait();
-                break;
-            case GameState.PlayerTurnPlay:
                 break;
             case GameState.PlayerTurnEnd:
                 HandlePlayerTurnEnd();
@@ -120,11 +114,11 @@ public class GameManager : MonoBehaviour
 
         // draw 4 cards
         if(handCards.Count == 0) pileManager.DrawCardsFromDeck(maxCardsInHand);
-    }
-
-    async void HandlePlayerTurnWait()
-    {
-        await Task.Delay(delayTime);
+        /*while(handCards.Count < maxCardsInHand)
+        {
+            pileManager.DrawCardsFromDeck(1);
+            new WaitForSeconds(1);
+        }*/
     }
 
     void HandlePlayerTurnEnd()

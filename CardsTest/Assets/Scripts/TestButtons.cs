@@ -12,7 +12,7 @@ public class TestButtons : MonoBehaviour
 {
     public void EndTurn()
     {
-        GameManager.Instance.UpdateGameState(GameManager.GameState.PlayerTurnEnd);
+        if (!GameManager.Instance.pileManager.playingCard) GameManager.Instance.UpdateGameState(GameManager.GameState.PlayerTurnEnd);
     }
 
     public void DescribeScriptableObj()
