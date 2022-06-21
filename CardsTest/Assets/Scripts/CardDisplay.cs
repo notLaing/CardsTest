@@ -27,7 +27,7 @@ public class CardDisplay : MonoBehaviour
     public float drawAnimTime = .3f;
     public float discardPlayAnimTime = .6f;
     public float discardEndAnimTime = 1.5f;
-    float spreadAnimTime = .3f;
+    float spreadAnimTime = .35f;
     public float playStillAnimTime = 2;
     float animTime = 0;
     float spreadRotMultiplier = -10;
@@ -84,11 +84,11 @@ public class CardDisplay : MonoBehaviour
                 break;
             case StateAnimation.Draw:
                 AnimateDraw();
-                if(ResetAnimTime(drawAnimTime)) SetAnimState(StateAnimation.Spread);//here - idle?
+                if(ResetAnimTime(drawAnimTime)) SetAnimState(StateAnimation.Spread);
                 break;
             case StateAnimation.Spread:
                 AnimateSpread();
-                if(ResetAnimTime(spreadAnimTime)) SetAnimState(StateAnimation.Idle);//here - add UpdateGameState?
+                if(ResetAnimTime(spreadAnimTime)) SetAnimState(StateAnimation.Idle);
                 break;
             case StateAnimation.Play:
                 AnimatePlay();
@@ -96,7 +96,7 @@ public class CardDisplay : MonoBehaviour
                 break;
             case StateAnimation.Discard:
                 AnimateDiscard();
-                if(ResetAnimTime(discardEndAnimTime)) GameManager.Instance.UpdateGameState(GameManager.GameState.PlayerTurnPrep);
+                if (ResetAnimTime(discardEndAnimTime)) SetAnimState(StateAnimation.Discarded);
                 break;
             case StateAnimation.Discarded:
                 FinishDiscard();
@@ -130,7 +130,6 @@ public class CardDisplay : MonoBehaviour
 
     void AnimateDraw()
     {
-        //transform.localPosition = AnimMath.Ease(transform.localPosition, GameManager.Instance.cardHandLocation.localPosition, .001f);
         transform.localScale = AnimMath.Ease(transform.localScale, GameManager.Instance.cardHandLocation.localScale, .001f);
         AnimateSpread();
     }
@@ -141,13 +140,18 @@ public class CardDisplay : MonoBehaviour
         float range = (float)(GameManager.Instance.handCards.Count - 1);
         float spread = (range < 1) ? 0 : AnimMath.Map(indexInHand, 0, range, (range / -2), (range / 2));
 
+        // localPosition
         Vector3 place = new Vector3(spread * spreadWidthMultiplier, Mathf.Abs(spread) * spreadHeightMultiplier, 0);
-        transform.localPosition = AnimMath.Ease(transform.localPosition, GameManager.Instance.cardHandLocation.localPosition + place, .001f);
+        transform.localPosition = AnimMath.Ease(transform.localPosition, GameManager.Instance.cardHandLocation.localPosition + place, .0001f);
         handPositionVec = transform.localPosition;
 
+        // localRotation
         Quaternion targetRot = GameManager.Instance.cardHandLocation.localRotation;
         targetRot.eulerAngles += new Vector3(0, 0, spread * spreadRotMultiplier);
-        transform.localRotation = AnimMath.Ease(transform.localRotation, targetRot, .001f);
+        transform.localRotation = AnimMath.Ease(transform.localRotation, targetRot, .0001f);
+
+        // localScale
+        transform.localScale = AnimMath.Ease(transform.localScale, GameManager.Instance.cardHandLocation.localScale, .0001f);
     }
 
     void AnimatePlay()

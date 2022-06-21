@@ -17,14 +17,17 @@ public class CardPile : MonoBehaviour
 
     public void DrawCardsFromDeck(int num)
     {
-        foreach (GameObject c in GameManager.Instance.displayCards)
+        // reset cards the first time drawing a card after a turn ends
+        if (GameManager.Instance.maxCardsInHand == GameManager.Instance.handCards.Count)
         {
-            c.transform.position = GameManager.Instance.cardSpawnLocation.position;
-            c.transform.localScale = GameManager.Instance.cardSpawnLocation.localScale;
+            foreach (GameObject c in GameManager.Instance.displayCards)
+            {
+                c.GetComponent<CardDisplay>().inHand = false;
+            }
         }
 
         // check if the number of displayCards is less than the number of cards we need to play
-        while (GameManager.Instance.maxCardsInHand > GameManager.Instance.displayCards.Count)
+        while (GameManager.Instance.handCards.Count + 1 > GameManager.Instance.displayCards.Count)
         {
             GameObject spawnCard = Instantiate(cardTemplate, GameManager.Instance.cardSpawnLocation.position, Quaternion.identity);
             spawnCard.transform.SetParent(GameManager.Instance.canvasObj.transform, false);
@@ -57,16 +60,18 @@ public class CardPile : MonoBehaviour
             GameManager.Instance.deckCards.RemoveAt(drawIndex);
 
             // create the appropriate type of card
-            GameManager.Instance.displayCards[i].GetComponent<CardDisplay>().CreateCardDisplay(GameManager.Instance.handCards[GameManager.Instance.handCards.Count - 1]);
-            GameManager.Instance.displayCards[i].GetComponent<CardDisplay>().inHand = true;
+            int newestCardIndex = GameManager.Instance.handCards.Count - 1;
+            GameManager.Instance.displayCards[newestCardIndex].GetComponent<CardDisplay>().CreateCardDisplay(GameManager.Instance.handCards[newestCardIndex]);
+            GameManager.Instance.displayCards[newestCardIndex].GetComponent<CardDisplay>().ResetOrientation();
+            GameManager.Instance.displayCards[newestCardIndex].GetComponent<CardDisplay>().inHand = true;
 
             // animate from deck to hand
-            GameManager.Instance.displayCards[i].GetComponent<CardDisplay>().ForceReset();
-            GameManager.Instance.displayCards[i].GetComponent<CardDisplay>().SetAnimState(CardDisplay.StateAnimation.Draw);
+            GameManager.Instance.displayCards[newestCardIndex].GetComponent<CardDisplay>().ForceReset();
+            GameManager.Instance.displayCards[newestCardIndex].GetComponent<CardDisplay>().SetAnimState(CardDisplay.StateAnimation.Draw);
         }
 
-        UpdateCardCounts();
-        //UpdateCardCountAfterTime(GameManager.Instance.displayCards[0].GetComponent<CardDisplay>().drawAnimTime);
+        if (GameManager.Instance.handCards.Count < GameManager.Instance.maxCardsInHand) StartCoroutine(KeepDrawing());
+        else UpdateCardCounts(true);
     }
 
     public void PlayCard(int indHand, int indOverall)
@@ -88,7 +93,6 @@ public class CardPile : MonoBehaviour
             
             GameManager.Instance.handCards.RemoveAt(indHand);
 
-            //UpdateCardCounts(true);
             StartCoroutine(UpdateCardCountAfterTime(displayedCard.playStillAnimTime + displayedCard.discardPlayAnimTime, true));
         }
         else
@@ -111,8 +115,9 @@ public class CardPile : MonoBehaviour
             c.GetComponent<CardDisplay>().inHand = false;
         }
 
-        //UpdateCardCounts();
-        StartCoroutine(UpdateCardCountAfterTime(GameManager.Instance.displayCards[0].GetComponent<CardDisplay>().discardEndAnimTime));
+        float endTime = GameManager.Instance.displayCards[0].GetComponent<CardDisplay>().discardEndAnimTime;
+        StartCoroutine(UpdateCardCountAfterTime(endTime));
+        StartCoroutine(StartNextTurn(endTime));
     }
 
     public void UpdateCardCounts(bool resetSpread = false)
@@ -133,6 +138,13 @@ public class CardPile : MonoBehaviour
                 if(resetSpread) currentCard.SetAnimState(CardDisplay.StateAnimation.Spread);
             }
         }
+    }
+
+    IEnumerator KeepDrawing()
+    {
+        UpdateCardCounts(true);
+        yield return new WaitForSeconds(GameManager.Instance.displayCards[0].GetComponent<CardDisplay>().drawAnimTime);
+        GameManager.Instance.UpdateGameState(GameManager.GameState.PlayerTurnPrep);
     }
 
     IEnumerator UpdateCardCountAfterTime(float t, bool b = false)

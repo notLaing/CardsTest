@@ -14,29 +14,9 @@ public class JSONRequest : MonoBehaviour
     int[] order = { 0, 1, 2 };
     int[] copies = { 4, 3, 2 };
 
-    void Awake()
-    {
-        GameManager.OnGameStateChanged += GameManager_OnGameStateChanged;
-    }
-
-    private void GameManager_OnGameStateChanged(GameManager.GameState obj)
-    {
-        GetData();
-    }
-
     void CreateCards(string jsonString)
     {
-        // this is a manual check because this is being called twice at start
-        if(GameManager.Instance.deckCards.Count > 0)
-        {
-            GameManager.Instance.UpdateGameState(GameManager.GameState.PlayerTurnPrep);
-            GameManager.OnGameStateChanged -= GameManager_OnGameStateChanged;
-            return;
-        }
-
         GameManager.Instance.baseCards = JsonUtility.FromJson<GameManager.CardList>(jsonString);
-
-        
 
         foreach(GameManager.Card c in GameManager.Instance.baseCards.cards)
         {
@@ -69,10 +49,9 @@ public class JSONRequest : MonoBehaviour
         }
         
         GameManager.Instance.UpdateGameState(GameManager.GameState.PlayerTurnPrep);
-        GameManager.OnGameStateChanged -= GameManager_OnGameStateChanged;
     }
 
-    void GetData() => StartCoroutine(GetDataCoroutine());
+    public void GetData() => StartCoroutine(GetDataCoroutine());
 
     IEnumerator GetDataCoroutine()
     {

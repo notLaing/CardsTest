@@ -15,6 +15,7 @@ using UnityEngine;
 public class GameManager : MonoBehaviour
 {
     public static GameManager Instance;
+    JSONRequest jsonScript;
 
     public CardList baseCards = new CardList();
 
@@ -34,7 +35,6 @@ public class GameManager : MonoBehaviour
     public CardPile pileManager;
     public string url = "https://client.dev.kote.robotseamonster.com/TEST_HARNESS/json_files/cards.json";
     public GameState state;
-    public static event Action<GameState> OnGameStateChanged;
     public int delayTime = 2000;
     public int playerEnergy = 4;
     public int playerMaxEnergy = 4;
@@ -81,6 +81,7 @@ public class GameManager : MonoBehaviour
     void Awake()
     {
         Instance = this;
+        jsonScript = gameObject.GetComponent<JSONRequest>();
     }
 
     // Start is called before the first frame update
@@ -96,7 +97,7 @@ public class GameManager : MonoBehaviour
         switch (newState)
         {
             case GameState.GameStart:
-                // currently only for allowing JSONRequest to activate
+                HandleGameStart();
                 break;
             case GameState.PlayerTurnPrep:
                 HandlePlayerTurnPrep();
@@ -105,26 +106,20 @@ public class GameManager : MonoBehaviour
                 HandlePlayerTurnEnd();
                 break;
         }
-
-        OnGameStateChanged?.Invoke(newState);//probably don't need this and then could edit the JSON
+    }
+    
+    void HandleGameStart()
+    {
+        jsonScript.GetData();
     }
 
     void HandlePlayerTurnPrep()
     {
-        //EnergyHandler.Instance.ResetEnergy();
-
         // draw 4 cards
-        //if(handCards.Count == 0) pileManager.DrawCardsFromDeck(maxCardsInHand);
-        /*while(handCards.Count < maxCardsInHand)
-        {
-            pileManager.DrawCardsFromDeck(1);
-            new WaitForSeconds(1);
-        }*/
-
         if(!turnInProgress)
         {
             EnergyHandler.Instance.ResetEnergy();
-            if (handCards.Count < maxCardsInHand) pileManager.DrawCardsFromDeck(maxCardsInHand);
+            if (handCards.Count < maxCardsInHand) pileManager.DrawCardsFromDeck(1);
             else turnInProgress = true;
         }
     }

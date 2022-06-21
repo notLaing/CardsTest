@@ -22,9 +22,4 @@ public class TestButtons : MonoBehaviour
             cd.DebugText();
         }
     }
-
-    public void DrawCard()
-    {
-        GameManager.Instance.UpdateGameState(GameManager.GameState.PlayerTurnPrep);
-    }
 }
