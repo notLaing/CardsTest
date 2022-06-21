@@ -28,12 +28,12 @@ public class CardDisplay : MonoBehaviour
     public float discardPlayAnimTime = .6f;
     public float discardEndAnimTime = 1.5f;
     float spreadAnimTime = .3f;
-    public float playStillAnimTime = 2f;
+    public float playStillAnimTime = 2;
     float animTime = 0;
-    float spreadRotMultiplier = -10f;
-    float spreadHeightMultiplier = -20f;
-    float spreadWidthMultiplier = 200f;
-    float xCurveRate = 300;//2.5f;
+    float spreadRotMultiplier = -10;
+    float spreadHeightMultiplier = -20;
+    float spreadWidthMultiplier = 200;
+    float xCurveRate = 300;
     float yCurveRate = 3.7f;
     float endTransitionCutoff = 2.1f;
 
@@ -46,7 +46,7 @@ public class CardDisplay : MonoBehaviour
     Color enoughColor = Color.white;
     Color notEnoughColor = Color.red;
     public GameObject glow;
-    float playHeight = 150f;
+    float playHeight = 150;
     float playWidth = 400;
     float playSize = .7f;
     float hoverRaiseAmount = 100;
@@ -72,7 +72,7 @@ public class CardDisplay : MonoBehaviour
     void Awake()
     {
         cam = Camera.main;
-        animState = StateAnimation.Idle;
+        SetAnimState(StateAnimation.Idle);
     }
 
     void Update()
@@ -84,15 +84,15 @@ public class CardDisplay : MonoBehaviour
                 break;
             case StateAnimation.Draw:
                 AnimateDraw();
-                if(ResetAnimTime(drawAnimTime)) animState = StateAnimation.Spread;
+                if(ResetAnimTime(drawAnimTime)) SetAnimState(StateAnimation.Spread);//here - idle?
                 break;
             case StateAnimation.Spread:
                 AnimateSpread();
-                if(ResetAnimTime(spreadAnimTime)) animState = StateAnimation.Idle;
+                if(ResetAnimTime(spreadAnimTime)) SetAnimState(StateAnimation.Idle);//here - add UpdateGameState?
                 break;
             case StateAnimation.Play:
                 AnimatePlay();
-                if(ResetAnimTime(playStillAnimTime + discardPlayAnimTime)) animState = StateAnimation.Discarded;
+                if(ResetAnimTime(playStillAnimTime + discardPlayAnimTime)) SetAnimState(StateAnimation.Discarded);
                 break;
             case StateAnimation.Discard:
                 AnimateDiscard();
@@ -172,7 +172,7 @@ public class CardDisplay : MonoBehaviour
         // move off the screen
         transform.localPosition += new Vector3(0, -3000, 0);
         GameManager.Instance.pileManager.playingCard = false;
-        animState = StateAnimation.Idle;
+        SetAnimState(StateAnimation.Idle);
     }
 
     void AnimateDiscard()
@@ -193,6 +193,13 @@ public class CardDisplay : MonoBehaviour
         {
             transform.localPosition = AnimMath.Ease(transform.localPosition, GameManager.Instance.cardDiscardLocation.localPosition, .001f);
         }
+    }
+
+    public void ResetOrientation()
+    {
+        transform.localPosition = GameManager.Instance.cardSpawnLocation.localPosition;
+        transform.localRotation = GameManager.Instance.cardSpawnLocation.localRotation;
+        transform.localScale = GameManager.Instance.cardSpawnLocation.localScale;
     }
 
     public void ChangeColor(bool b)

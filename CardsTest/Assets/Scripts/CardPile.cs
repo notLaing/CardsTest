@@ -140,4 +140,10 @@ public class CardPile : MonoBehaviour
         yield return new WaitForSeconds(t);
         UpdateCardCounts(b);
     }
+
+    IEnumerator StartNextTurn(float t)
+    {
+        yield return new WaitForSeconds(t);
+        GameManager.Instance.UpdateGameState(GameManager.GameState.PlayerTurnPrep);
+    }
 }

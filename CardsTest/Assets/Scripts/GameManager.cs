@@ -38,6 +38,7 @@ public class GameManager : MonoBehaviour
     public int delayTime = 2000;
     public int playerEnergy = 4;
     public int playerMaxEnergy = 4;
+    public bool turnInProgress = false;
 
     public enum GameState
     {
@@ -105,20 +106,27 @@ public class GameManager : MonoBehaviour
                 break;
         }
 
-        OnGameStateChanged?.Invoke(newState);
+        OnGameStateChanged?.Invoke(newState);//probably don't need this and then could edit the JSON
     }
 
     void HandlePlayerTurnPrep()
     {
-        EnergyHandler.Instance.ResetEnergy();
+        //EnergyHandler.Instance.ResetEnergy();
 
         // draw 4 cards
-        if(handCards.Count == 0) pileManager.DrawCardsFromDeck(maxCardsInHand);
+        //if(handCards.Count == 0) pileManager.DrawCardsFromDeck(maxCardsInHand);
         /*while(handCards.Count < maxCardsInHand)
         {
             pileManager.DrawCardsFromDeck(1);
             new WaitForSeconds(1);
         }*/
+
+        if(!turnInProgress)
+        {
+            EnergyHandler.Instance.ResetEnergy();
+            if (handCards.Count < maxCardsInHand) pileManager.DrawCardsFromDeck(maxCardsInHand);
+            else turnInProgress = true;
+        }
     }
 
     void HandlePlayerTurnEnd()
@@ -130,6 +138,7 @@ public class GameManager : MonoBehaviour
                 card.GetComponent<CardDisplay>().SetAnimState(CardDisplay.StateAnimation.Discard);
             }
         }
+        turnInProgress = false;
         pileManager.EndTurn();
     }
 }
